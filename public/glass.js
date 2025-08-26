@@ -1,6 +1,8 @@
 (function(){
   "use strict";
-  const css = `
+  if (document.getElementById("aiw-glass-style")) return;
+
+  var css = `
   #ai-plantae-chat .aiw-btn{
     background: rgba(255,255,255,.12);
     color: #fff;
@@ -15,12 +17,15 @@
   }
   #ai-plantae-chat .aiw-btn:hover{ transform: translateY(-1px); opacity:1 }
   #ai-plantae-chat .aiw-btn:active{ transform: translateY(0); opacity:.94 }
+
   #ai-plantae-chat .aiw-plant{
     background: rgba(255,255,255,.18);
     border: 1px solid rgba(255,255,255,.25);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.16);
   }
+
   @media (prefers-color-scheme: dark){
     #ai-plantae-chat .aiw-btn{
       background: rgba(18,18,18,.35);
@@ -33,8 +38,8 @@
       border-color: rgba(255,255,255,.12);
     }
   }`;
-  const style = document.createElement("style");
+  var style = document.createElement("style");
   style.id = "aiw-glass-style";
   style.textContent = css;
-  (document.head || document.documentElement).appendChild(style);
+  (document.head||document.documentElement).appendChild(style);
 })();
