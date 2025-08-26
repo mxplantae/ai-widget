@@ -1,13 +1,19 @@
+// api/telemetry.js
+import { withCORS, handlePreflight } from "./_utils.cors.js";
+
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "https://mxplantae.com");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  withCORS(req, res);
+  if (handlePreflight(req, res)) return;
 
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST") {
+    return res.status(405).json({ success: false, error: "Method not allowed" });
+  }
 
-  const { kind, data, path, ts } = req.body;
-  console.log("Telemetry:", { kind, data, path, ts });
-
-  res.status(200).json({ success: true });
+  try {
+    const body = req.body || {};
+    console.log("[telemetry]", JSON.stringify(body).slice(0, 2000));
+    return res.status(200).json({ success: true });
+  } catch (e) {
+    return res.status(500).json({ success: false, error: e.message || "Server error" });
+  }
 }
