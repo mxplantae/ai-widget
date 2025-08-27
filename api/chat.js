@@ -1,45 +1,42 @@
-// api/chat.js
-import { withCORS, handlePreflight } from "./_utils.cors.js";
+import { withCORS, handlePreflight } from "./_utils/cors.js";
 
 export default async function handler(req, res) {
-  withCORS(req, res);
   if (handlePreflight(req, res)) return;
-
-  if (req.method !== "POST") {
-    return res.status(405).json({ success: false, error: "Method not allowed" });
-  }
-
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ success: false, error: "Missing OPENAI_API_KEY" });
-  }
+  withCORS(req, res);
 
   try {
-    const { messages = [], model = "gpt-5" } = req.body || {};
-    if (!Array.isArray(messages)) {
-      return res.status(400).json({ success: false, error: "messages must be an array" });
+    if (req.method !== "POST") {
+      return res.status(405).json({ success: false, error: "Method not allowed" });
     }
+    const body = req.body || {};
+    const messages = Array.isArray(body.messages) ? body.messages : [];
+    const input = messages.map(m => `${(m.role || "user").toUpperCase()}: ${m.content || ""}`).join("\n");
 
-    // Construye un input simple desde messages
-    const input = messages.map(m => `${(m.role||"user").toUpperCase()}: ${m.content||""}`).join("\n");
-
-    const up = await fetch("https://api.openai.com/v1/responses", {
+    const r = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
-        "content-type": "application/json",
-        "authorization": `Bearer ${apiKey}`
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify({ model, input })
+      body: JSON.stringify({
+        model: "gpt-4",
+        input
+      })
     });
 
-    const data = await up.json().catch(() => null);
-    if (!up.ok) {
-      return res.status(up.status).json({ success: false, error: data?.error?.message || "Upstream error" });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      return res.status(500).json({ success: false, error: j || "openai_error" });
     }
 
-    const text = data?.output_text || "";
-    return res.status(200).json({ success: true, output_text: text });
+    const output_text =
+      j.output_text ||
+      (Array.isArray(j.output)
+        ? j.output.map(x => x?.content?.[0]?.text?.value || "").join("\n")
+        : "");
+
+    return res.status(200).json({ success: true, output_text });
   } catch (e) {
-    return res.status(500).json({ success: false, error: e.message || "Server error" });
+    return res.status(500).json({ success: false, error: String(e) });
   }
 }
