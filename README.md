@@ -1,4 +1,3 @@
-@@ -1,17 +1 @@
 # Mxplantae AI Widget
 
 Backend en Vercel (API) + scripts frontend en `public/`.
